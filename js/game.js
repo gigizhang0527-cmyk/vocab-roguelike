@@ -496,20 +496,24 @@ class Game {
     zone.addEventListener('touchend', endJoy, {passive:false});
     zone.addEventListener('touchcancel', endJoy, {passive:false});
 
-    // Right side: tap to aim + fire
+    // Right side: touch-drag to aim, release to fire
+    this.touchAimId = null; // track which touch is aiming
+
     this.cv.addEventListener('touchstart', e => {
-      // Ignore touches in joystick zone (left 40%)
       for(const t of e.changedTouches){
         if(t.clientX < window.innerWidth * 0.4) continue;
-        this.mouse = this.clientToGame(t.clientX, t.clientY);
+        const gp = this.clientToGame(t.clientX, t.clientY);
         if(this.state === GameState.Menu){
-          this.handleMenuClick(this.mouse);
+          this.handleMenuClick(gp);
         } else if(this.state === GameState.RewardChoice){
-          this.handleRewardClick(this.mouse);
+          this.handleRewardClick(gp);
         } else if(this.state === GameState.Playing){
-          this.fireHeldMeaning(false);
+          // Start aiming (don't fire yet)
+          this.touchAimId = t.identifier;
+          this.mouse = gp;
+          this.updateFacingFromAim(true);
         } else if(this.state === GameState.GameOver || this.state === GameState.Win){
-          // tap to return
+          this.state = GameState.Menu;
         }
       }
     }, {passive:true});
@@ -518,6 +522,29 @@ class Game {
       for(const t of e.changedTouches){
         if(t.clientX < window.innerWidth * 0.4) continue;
         this.mouse = this.clientToGame(t.clientX, t.clientY);
+        if(this.touchAimId !== null && t.identifier === this.touchAimId){
+          this.updateFacingFromAim(true);
+        }
+      }
+    }, {passive:true});
+
+    this.cv.addEventListener('touchend', e => {
+      for(const t of e.changedTouches){
+        if(t.identifier === this.touchAimId){
+          // Release → fire
+          this.mouse = this.clientToGame(t.clientX, t.clientY);
+          if(this.state === GameState.Playing) this.fireHeldMeaning(false);
+          this.touchAimId = null;
+          break;
+        }
+      }
+    }, {passive:true});
+
+    this.cv.addEventListener('touchcancel', e => {
+      for(const t of e.changedTouches){
+        if(t.identifier === this.touchAimId){
+          this.touchAimId = null; break;
+        }
       }
     }, {passive:true});
   }
@@ -1797,6 +1824,31 @@ class Game {
 
   drawCrosshair(ctx){
     const x=this.mouse.x,y=this.mouse.y;
+
+    // Mobile: show aim line from player to touch point when aiming
+    if(this.touchAimId !== null && this.player){
+      const px=this.player.pos.x, py=this.player.pos.y;
+      const dir=this.mouse.sub(this.player.pos).norm();
+      const lineLen=120;
+      const ex=px+dir.x*lineLen, ey=py+dir.y*lineLen;
+      // Dashed aim line
+      ctx.save();
+      ctx.strokeStyle='rgba(255,232,128,0.6)';ctx.lineWidth=2;
+      ctx.setLineDash([6,4]);
+      ctx.beginPath();ctx.moveTo(px,py);ctx.lineTo(ex,ey);ctx.stroke();
+      ctx.setLineDash([]);
+      // Arrow head
+      const arrowSize=8;
+      const angle=Math.atan2(ey-py,ex-px);
+      ctx.fillStyle='rgba(255,232,128,0.7)';
+      ctx.beginPath();
+      ctx.moveTo(ex,ey);
+      ctx.lineTo(ex-arrowSize*Math.cos(angle-0.4),ey-arrowSize*Math.sin(angle-0.4));
+      ctx.lineTo(ex-arrowSize*Math.cos(angle+0.4),ey-arrowSize*Math.sin(angle+0.4));
+      ctx.closePath();ctx.fill();
+      ctx.restore();
+    }
+
     ctx.strokeStyle='rgba(20,24,28,0.9)';ctx.lineWidth=3;
     ctx.beginPath();ctx.arc(x,y,8,0,Math.PI*2);ctx.stroke();
     ctx.beginPath();ctx.moveTo(x-14,y);ctx.lineTo(x-10,y);ctx.stroke();
