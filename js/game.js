@@ -186,6 +186,7 @@ class Game {
     this.touchJoyActive = false;
     this.touchJoyOrigin = new Vec2();
     this.touchJoyDir = new Vec2();
+    this.touchAimId = null;
 
     // Assets
     this.images = {};
