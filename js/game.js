@@ -303,6 +303,26 @@ class Game {
     } catch(e){}
   }
 
+  speakWord(word){
+    try {
+      if(!('speechSynthesis' in window)) return;
+      // Cancel any ongoing speech
+      window.speechSynthesis.cancel();
+      const utter = new SpeechSynthesisUtterance(word);
+      utter.lang = 'en-US';
+      utter.rate = 0.85;
+      utter.pitch = 1;
+      utter.volume = 1;
+      // Try to pick an English voice
+      const voices = window.speechSynthesis.getVoices();
+      const enVoice = voices.find(v => v.lang.startsWith('en') && v.name.includes('Google')) ||
+                      voices.find(v => v.lang.startsWith('en-US')) ||
+                      voices.find(v => v.lang.startsWith('en'));
+      if(enVoice) utter.voice = enVoice;
+      window.speechSynthesis.speak(utter);
+    } catch(e){}
+  }
+
   buildObstacleSpriteSources(){
     const img = this.images.obstacles;
     if(!img) return;
@@ -1278,6 +1298,7 @@ class Game {
 
   killMonster(m){
     this.addFloat('记住 '+m.entry.word, m.pos.add(new Vec2(0,-58)), '#ffffff');
+    this.speakWord(m.entry.word);
     const lastMonster=this.monsters.length===1;
     if(Math.random()<0.16+this.player.luck){
       const kind=Math.floor(Math.random()*7);
