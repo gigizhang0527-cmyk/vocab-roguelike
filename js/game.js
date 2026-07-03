@@ -203,6 +203,7 @@ class Game {
     this.renderScale = 1;
     this.renderOffsetX = 0;
     this.renderOffsetY = 0;
+    this.fontScale = 1.0; // 1.0 = default, user-adjustable
 
     this.init();
   }
@@ -212,6 +213,7 @@ class Game {
     this.detectMobile();
     this.resizeCanvas();
     window.addEventListener('resize', () => this.resizeCanvas());
+    document.addEventListener('fullscreenchange', () => this.resizeCanvas());
     await this.loadAssets();
     this.loadSave();
     await this.loadWords();
@@ -466,6 +468,23 @@ class Game {
     document.getElementById('btn-book').addEventListener('touchstart', e => {
       e.preventDefault(); this.showBook = !this.showBook;
     }, {passive:false});
+    // Fullscreen button
+    const btnFs = document.getElementById('btn-fs');
+    const toggleFs = () => {
+      if(!document.fullscreenElement) document.documentElement.requestFullscreen().catch(()=>{});
+      else document.exitFullscreen().catch(()=>{});
+    };
+    btnFs.addEventListener('touchstart', e => { e.preventDefault(); toggleFs(); }, {passive:false});
+    btnFs.addEventListener('click', e => { e.preventDefault(); toggleFs(); });
+    // Font size controls
+    const btnDec = document.getElementById('font-dec');
+    const btnInc = document.getElementById('font-inc');
+    const decFont = (e) => { e.preventDefault(); this.fontScale = Math.max(0.6, this.fontScale - 0.15); };
+    const incFont = (e) => { e.preventDefault(); this.fontScale = Math.min(2.5, this.fontScale + 0.15); };
+    btnDec.addEventListener('touchstart', decFont, {passive:false});
+    btnDec.addEventListener('click', decFont);
+    btnInc.addEventListener('touchstart', incFont, {passive:false});
+    btnInc.addEventListener('click', incFont);
   }
 
   setupTouch(){
@@ -577,6 +596,12 @@ class Game {
       if(!document.fullscreenElement) document.documentElement.requestFullscreen().catch(()=>{});
       else document.exitFullscreen().catch(()=>{});
       return;
+    }
+    if(e.code === 'NumpadAdd' || e.code === 'Equal'){
+      this.fontScale = Math.min(2.5, this.fontScale + 0.15); return;
+    }
+    if(e.code === 'NumpadSubtract' || e.code === 'Minus'){
+      this.fontScale = Math.max(0.6, this.fontScale - 0.15); return;
     }
     if(this.state === GameState.Menu){
       if(e.code==='Digit1'||e.code==='Numpad1'){this.playSound('ui_click');this.selectDifficulty(1,'小学 / PEP词汇');}
@@ -1576,6 +1601,9 @@ class Game {
     ctx.setTransform(1,0,0,1,0,0);
     ctx.clearRect(0,0,this.cv.width,this.cv.height);
     ctx.fillStyle='#000';ctx.fillRect(0,0,this.cv.width,this.cv.height);
+    // Update font label
+    const fl=document.getElementById('font-label');
+    if(fl) fl.textContent=Math.round(this.fontScale*100)+'%';
 
     ctx.save();
     ctx.translate(this.renderOffsetX,this.renderOffsetY);
@@ -1740,7 +1768,7 @@ class Game {
         ctx.beginPath();ctx.arc(m.pos.x,m.pos.y,m.radius+12,0,Math.PI*2);ctx.stroke();
       }
       // Word text
-      this.drawOutlinedText(ctx,m.entry.word,m.pos.x,m.pos.y-12,'#fff084','#121218');
+      this.drawOutlinedText(ctx,m.entry.word,m.pos.x,m.pos.y-12,'#e8451a','#fff');
       // HP bar
       this.drawHpBar(ctx,m.pos.x-28,m.pos.y+m.radius+9,56,5,m.hp/m.maxHp,'#ffde76');
     }
@@ -1754,7 +1782,7 @@ class Game {
       ctx.fillStyle=fill;ctx.strokeStyle='rgba(40,24,0,0.5)';ctx.lineWidth=2;
       roundRect(ctx,bounds.x,bounds.y,bounds.w,bounds.h,7);ctx.fill();ctx.stroke();
       ctx.fillStyle='rgba(42,35,23)';
-      ctx.font='bold 16px "Microsoft YaHei","PingFang SC",sans-serif';
+      ctx.font='bold '+Math.round(16*this.fontScale)+'px "Microsoft YaHei","PingFang SC",sans-serif';
       ctx.textAlign='center';ctx.textBaseline='middle';
       ctx.fillText(token.meaning,token.pos.x,token.pos.y);
     }
@@ -1766,7 +1794,7 @@ class Game {
       const color=p.universal?'rgba(165,226,255,0.9)':'rgba(246,241,174,0.9)';
       ctx.fillStyle=color;ctx.strokeStyle='rgba(66,20,0,0.5)';ctx.lineWidth=2;
       ctx.beginPath();ctx.arc(p.pos.x,p.pos.y,9,0,Math.PI*2);ctx.fill();ctx.stroke();
-      ctx.fillStyle='#fff';ctx.font='bold 11px sans-serif';ctx.textAlign='center';
+      ctx.fillStyle='#fff';ctx.font='bold '+Math.round(11*this.fontScale)+'px sans-serif';ctx.textAlign='center';
       ctx.fillText(p.universal?'回声':p.meaning,p.pos.x,p.pos.y-13);
     }
     ctx.textAlign='start';
@@ -1805,19 +1833,19 @@ class Game {
     ctx.fillStyle='rgba(16,20,25,0.77)';ctx.fillRect(0,0,W,58);
     // HP bar
     this.drawHpBar(ctx,24,18,180,16,this.player.hp/this.player.maxHp,'#69e280');
-    ctx.fillStyle='#fff';ctx.font='12px "Microsoft YaHei",sans-serif';
+    ctx.fillStyle='#fff';ctx.font=Math.round(12*this.fontScale)+'px "Microsoft YaHei",sans-serif';
     ctx.textAlign='start';
     ctx.fillText('HP '+Math.max(0,Math.floor(this.player.hp))+'/'+Math.floor(this.player.maxHp),32,30);
     ctx.fillText('房间 '+this.room+' · '+THEMES[(this.room-1)%THEMES.length].name+' · '+this.selectedModeName,225,30);
     ctx.fillText('连击 '+this.combo+'  命中率 '+this.accuracyText(),560,30);
-    ctx.font='bold 16px "Microsoft YaHei",sans-serif';
+    ctx.font='bold '+Math.round(16*this.fontScale)+'px "Microsoft YaHei",sans-serif';
     ctx.fillText('持有：'+(this.player.heldMeaning.length===0?'无':this.player.heldMeaning),760,30);
-    ctx.font='12px sans-serif';
+    ctx.font=Math.round(12*this.fontScale)+'px sans-serif';
     const distinctWords=new Set(this.runWords.map(w=>w.word)).size;
     ctx.fillText('已见词 '+distinctWords+'/'+this.bankWords.length,1080,30);
     // Bottom message
     if(this.message.length>0){
-      ctx.fillStyle='rgba(224,235,241,0.9)';ctx.font='12px sans-serif';
+      ctx.fillStyle='rgba(224,235,241,0.9)';ctx.font=Math.round(12*this.fontScale)+'px sans-serif';
       ctx.fillText(this.message,34,H-8);
     }
     // Cooldowns
@@ -1830,7 +1858,7 @@ class Game {
     ctx.strokeRect(x,y,56,10);
     ctx.fillStyle='rgba(255,255,255,0.12)';ctx.fillRect(x,y,56,10);
     ctx.fillStyle=color;ctx.fillRect(x,y,56*value,10);
-    ctx.fillStyle='#fff';ctx.font='11px sans-serif';ctx.textAlign='start';
+    ctx.fillStyle='#fff';ctx.font=Math.round(11*this.fontScale)+'px sans-serif';ctx.textAlign='start';
     ctx.fillText(label,x,y+22);
   }
 
@@ -1838,7 +1866,7 @@ class Game {
     for(const ft of this.floatingTexts){
       const alpha=clamp01(ft.life/1.35);
       ctx.globalAlpha=alpha;
-      ctx.fillStyle=ft.color;ctx.font='12px "Microsoft YaHei",sans-serif';
+      ctx.fillStyle=ft.color;ctx.font=Math.round(12*this.fontScale)+'px "Microsoft YaHei",sans-serif';
       ctx.textAlign='start';ctx.fillText(ft.text,ft.pos.x,ft.pos.y);
     }
     ctx.globalAlpha=1;
@@ -1886,7 +1914,8 @@ class Game {
   }
 
   drawOutlinedText(ctx,text,x,y,fill,outline){
-    ctx.font='bold 16px "Segoe UI","Microsoft YaHei",sans-serif';
+    const sz=Math.round(16*this.fontScale);
+    ctx.font='bold '+sz+'px "Segoe UI","Microsoft YaHei",sans-serif';
     ctx.textAlign='center';ctx.textBaseline='middle';
     ctx.fillStyle=outline;
     ctx.fillText(text,x-1,y);ctx.fillText(text,x+1,y);
@@ -1954,8 +1983,9 @@ class Game {
 
     // Hints
     ctx.fillStyle='#b0bec9';ctx.font='12px sans-serif';
-    ctx.fillText('快捷键：1/2/3/4 选择难度，Enter 开始，F11 全屏',W/2-220,612);
+    ctx.fillText('快捷键：1/2/3/4 选择难度，Enter 开始，F11 全屏，+/- 调字体',W/2-260,612);
     ctx.fillText('游戏内：WASD 移动  鼠标瞄准  左键发射  E 拾取  Space 闪避',W/2-260,642);
+    ctx.fillText('移动端：左摇杆移动  右侧拖动瞄准  A-/A+ 调字体  ⛶ 全屏',W/2-240,672);
     ctx.textAlign='start';
   }
 
