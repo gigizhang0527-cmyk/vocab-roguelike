@@ -966,7 +966,7 @@ class Game {
   generateObstacles(){
     this.obstacles=[];
     const themeIndex=(this.room-1+THEMES.length)%THEMES.length;
-    let target=6+Math.floor(Math.random()*4)+Math.min(3,Math.floor(this.room/4));
+    let target=4+Math.floor(Math.random()*3)+Math.min(2,Math.floor(this.room/4));
     if(themeIndex===7) target+=2;
     for(let attempt=0;attempt<target*18&&this.obstacles.length<target;attempt++){
       const ob=this.createRandomObstacle(themeIndex);
@@ -979,16 +979,16 @@ class Game {
   createRandomObstacle(themeIndex){
     const ob=new Obstacle();
     ob.spriteIndex=themeIndex;
-    let w=72+Math.random()*70, h=44+Math.random()*58;
+    let w=56+Math.random()*50, h=36+Math.random()*40;
     let kind='障碍', fill='rgb(100,125,95)', stroke='rgb(43,54,39)';
-    if(themeIndex===0){w=46+Math.random()*30;h=46+Math.random()*30;kind='树木';fill='rgb(70,136,68)';stroke='rgb(31,73,38)';}
-    else if(themeIndex===1){w=96+Math.random()*54;h=42+Math.random()*32;kind='办公桌';fill='rgb(118,103,82)';stroke='rgb(58,49,38)';}
-    else if(themeIndex===2){w=54+Math.random()*32;h=118+Math.random()*52;kind='书架';fill='rgb(112,78,105)';stroke='rgb(54,38,58)';}
-    else if(themeIndex===3){w=108+Math.random()*54;h=48+Math.random()*34;kind='实验桌';fill='rgb(70,116,126)';stroke='rgb(35,66,74)';}
-    else if(themeIndex===4){w=70+Math.random()*42;h=78+Math.random()*54;kind='写字楼';fill='rgb(132,116,91)';stroke='rgb(67,56,43)';}
-    else if(themeIndex===5){w=58+Math.random()*34;h=118+Math.random()*54;kind='书架';fill='rgb(111,105,137)';stroke='rgb(55,53,78)';}
-    else if(themeIndex===6){w=96+Math.random()*42;h=48+Math.random()*24;kind='汽车';fill='rgb(72,137,166)';stroke='rgb(33,73,92)';}
-    else if(themeIndex===7){w=40+Math.random()*34;h=34+Math.random()*30;kind='花草';fill='rgb(101,154,92)';stroke='rgb(57,91,53)';}
+    if(themeIndex===0){w=36+Math.random()*22;h=36+Math.random()*22;kind='树木';fill='rgb(70,136,68)';stroke='rgb(31,73,38)';}
+    else if(themeIndex===1){w=72+Math.random()*38;h=34+Math.random()*24;kind='办公桌';fill='rgb(118,103,82)';stroke='rgb(58,49,38)';}
+    else if(themeIndex===2){w=42+Math.random()*24;h=88+Math.random()*38;kind='书架';fill='rgb(112,78,105)';stroke='rgb(54,38,58)';}
+    else if(themeIndex===3){w=82+Math.random()*38;h=38+Math.random()*26;kind='实验桌';fill='rgb(70,116,126)';stroke='rgb(35,66,74)';}
+    else if(themeIndex===4){w=54+Math.random()*30;h=60+Math.random()*38;kind='写字楼';fill='rgb(132,116,91)';stroke='rgb(67,56,43)';}
+    else if(themeIndex===5){w=44+Math.random()*26;h=88+Math.random()*40;kind='书架';fill='rgb(111,105,137)';stroke='rgb(55,53,78)';}
+    else if(themeIndex===6){w=74+Math.random()*30;h=38+Math.random()*18;kind='汽车';fill='rgb(72,137,166)';stroke='rgb(33,73,92)';}
+    else if(themeIndex===7){w=32+Math.random()*26;h=28+Math.random()*22;kind='花草';fill='rgb(101,154,92)';stroke='rgb(57,91,53)';}
     ob.bounds={x:72+Math.random()*Math.max(1,W-144-w), y:98+Math.random()*Math.max(1,H-170-h), w, h};
     ob.kind=kind;ob.fill=fill;ob.stroke=stroke;
     return ob;
@@ -1154,9 +1154,9 @@ class Game {
   updateMonsters(dt){
     for(const m of this.monsters){
       if(m.rageTimer>0) m.rageTimer-=dt;
-      let speed=55+this.room*3+m.entry.difficulty*8;
-      if(m.kind===MonsterKind.Chaser) speed+=28;
-      if(m.kind===MonsterKind.Ghost) speed+=38;
+      let speed=40+this.room*2+m.entry.difficulty*5;
+      if(m.kind===MonsterKind.Chaser) speed+=20;
+      if(m.kind===MonsterKind.Ghost) speed+=28;
       if(m.rageTimer>0) speed*=1.8;
       if(this.roomDifficultyScale<0.95) speed*=0.85;
       if(this.roomDifficultyScale>1.1) speed*=1.12;
